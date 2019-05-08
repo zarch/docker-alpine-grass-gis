@@ -69,6 +69,7 @@ ENV PACKAGES="\
       libpng \
       musl \
       musl-utils \
+      ncurses \
       openjpeg \
       openblas \
       py3-numpy \
@@ -79,9 +80,6 @@ ENV PACKAGES="\
       sqlite \
       sqlite-libs \
       tiff \
-      vim \
-      wget \
-      zip \
       zstd \
       zstd-libs \
     " \
@@ -143,16 +141,12 @@ RUN echo "Install main packages";\
     apk add --no-cache \
             --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
             --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-            --virtual .build-deps $GRASS_BUILD_PACKAGES;
+            --virtual .build-deps $GRASS_BUILD_PACKAGES; \
     # echo LANG="en_US.UTF-8" > /etc/default/locale;
-
-
-# =============
-# COMPILE PROJ4
-# =============
-
-# install the latest projection library for GRASS GIS
-RUN echo "Install PROJ4";\
+    #
+    # install the latest projection library for GRASS GIS
+    #
+    echo "Install PROJ4";\
     echo "  => Dowload proj-$PROJ_VERSION";\
     wget http://download.osgeo.org/proj/proj-$PROJ_VERSION.tar.gz && \
     tar xzvf proj-$PROJ_VERSION.tar.gz && \
@@ -167,34 +161,46 @@ RUN echo "Install PROJ4";\
     echo "  => compile" &&\
     make && \
     echo "  => install" &&\
-    make install
-
-
-# =================
-# COMPILE GRASS GIS
-# =================
-
-# Checkout and install GRASS GIS
-RUN echo "Install GRASS GIS";\
+    make install && \
+    ldconfig /etc/ld.so.conf.d; \
+    #
+    # Checkout and install GRASS GIS
+    #
+    echo "Install GRASS GIS";\
     echo "  => Dowload grass-$GRASS_VERSION";\
     wget https://grass.osgeo.org/grass`echo $GRASS_VERSION | tr -d .`/source/snapshot/grass-$GRASS_VERSION.svn_src_snapshot_latest.tar.gz && \
     # unpack source code package and remove tarball archive:
     mkdir /src/grass_build && \
     tar xfz grass-$GRASS_VERSION.svn_src_snapshot_latest.tar.gz --strip=1 -C /src/grass_build && \
-    rm -f grass-$GRASS_VERSION.svn_src_snapshot_latest.tar.gz
+    rm -f grass-$GRASS_VERSION.svn_src_snapshot_latest.tar.gz; \
+    #
+    # Configure compile and install GRASS GIS
+    #
+    echo "  => Configure and compile grass";\
+    cd /src/grass_build && \
+    /src/grass_build/configure $GRASS_CONFIG && \
+    make -j $NUMTHREADS && \
+    make install && \
+    ldconfig /etc/ld.so.conf.d; \
+    #
+    # enable simple grass command regardless of version number
+    #
+    ln -s `find /usr/local/bin -name "grass*"` /usr/local/bin/grass; \
+    #
+    # Reduce the image size
+    #
+    rm -rf /src/*; \
+    # remove build dependencies and any leftover apk cache
+    apk del --no-cache --purge .build-deps; \
+    rm -rf /var/cache/apk/*; \
+    rm -rf /root/.cache; \
+    # Remove unnecessary grass files
+    rm -rf /usr/local/grass77/demolocation; \
+    rm -rf /usr/local/grass77/docs; \
+    rm -rf /usr/local/grass77/fonts; \
+    rm -rf /usr/local/grass77/gui; \
+    rm -rf /usr/local/grass77/share;
 
-# update snapshot once more to grab latest updates and fixes:
-WORKDIR /src/grass_build
-# RUN echo "  => Update grass-$GRASS_VERSION svn";\
-#     svn update
-
-# Configure compile and install GRASS GIS
-RUN echo "  => Configure and compile grass";\
-    /src/grass_build/configure $GRASS_CONFIG && make -j $NUMTHREADS \
-    && make install && ldconfig /etc/ld.so.conf.d
-
-# enable simple grass command regardless of version number
-RUN ln -s `find /usr/local/bin -name "grass*"` /usr/local/bin/grass
 
 # Unset environmental variables to avoid later compilation issues
 ENV INTEL="" \
@@ -219,26 +225,6 @@ RUN pip install grass-session
 # set GRASSBIN
 ENV GRASSBIN="/usr/local/bin/grass"
 
-
-# ========
-# CLEAN UP
-# ========
-
-# Reduce the image size
-RUN rm -rf /src/*;\
-    # remove build dependencies and any leftover apk cache
-    apk del --no-cache --purge .build-deps;\
-    rm -rf /var/cache/apk/*; \
-    rm -rf /root/.cache;
-
-# Remove unnecessary grass files
-RUN rm -rf /usr/local/grass77/demolocation; \
-    rm -rf /usr/local/grass77/docs; \
-    rm -rf /usr/local/grass77/fonts; \
-    rm -rf /usr/local/grass77/gui; \
-    rm -rf /usr/local/grass77/share;
-
-
 # ========
 # FINALIZE
 # ========
@@ -249,10 +235,8 @@ VOLUME /grassdb
 
 # GRASS GIS specific
 # allow work with MAPSETs that are not owned by current user
-ENV GRASS_SKIP_MAPSET_OWNER_CHECK=1
-
-# set locale
-ENV LC_ALL="en_US.UTF-8"
+ENV GRASS_SKIP_MAPSET_OWNER_CHECK=1 \
+    LC_ALL="en_US.UTF-8"
 
 # debug
 RUN $GRASSBIN --config revision version
