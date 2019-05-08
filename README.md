@@ -1,7 +1,6 @@
 [![Docker Stars](https://img.shields.io/docker/stars/zarch/alpine-grass-gis.svg?style=flat-square)](https://hub.docker.com/r/zarch/alpine-grass-gis/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/zarch/alpine-grass-gis.svg?style=flat-square)](https://hub.docker.com/r/zarch/alpine-grass-gis/)
 [![License](https://img.shields.io/github/license/zarch/docker-alpine-grass-gis.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0)
-	https://img.shields.io/github/license/zarch/docker-alpine-grass-gis.svg
 
 
 # Docker GRASS GIS (alpine linux)
