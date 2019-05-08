@@ -1,7 +1,16 @@
+[![Docker Stars](https://img.shields.io/docker/stars/zarch/alpine-grass-gis.svg?style=flat-square)](https://hub.docker.com/r/zarch/alpine-grass-gis/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/zarch/alpine-grass-gis.svg?style=flat-square)](https://hub.docker.com/r/zarch/alpine-grass-gis/)
+[![License](https://img.shields.io/github/license/zarch/docker-alpine-grass-gis.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0)
+	https://img.shields.io/github/license/zarch/docker-alpine-grass-gis.svg
+
 
 # Docker GRASS GIS (alpine linux)
 
 Dockerfile with an [Alpine Linux](https://www.alpinelinux.org/) image with [GRASS GIS](https://grass.osgeo.org/) and [grass-session](https://github.com/zarch/grass-session/).
+
+Download size of this image is only:
+
+[![](https://images.microbadger.com/badges/image/zarch/alpine-grass-gis.svg)](https://microbadger.com/images/zarch/alpine-grass-gis "Get your own image badge on microbadger.com")
 
 
 
